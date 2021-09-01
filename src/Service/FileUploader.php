@@ -19,7 +19,11 @@ class FileUploader
     public function upload(UploadedFile $file)
     {
         try {
-            $file->move($this->getTargetDirectory(), $file->getClientOriginalName());
+            $fileDirectory = $this->getTargetDirectory().'/'.$file->getClientOriginalExtension();
+            if (!is_dir($fileDirectory)) {
+                mkdir($fileDirectory, 0755);
+            }
+            $file->move($fileDirectory, $file->getClientOriginalName());
         } catch (FileException $e) {
             throw new FileException("Can't upload a file -> ".$e);
         }
