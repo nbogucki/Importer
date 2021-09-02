@@ -5,7 +5,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use App\Entity\Products;
+use Psr\Log\LoggerInterface;
 
 class ImportProductsCommand extends Command
 {
@@ -23,11 +25,17 @@ class ImportProductsCommand extends Command
      * @var EntityManagerInterface
      */
     private $entityManager;
+    
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
-    public function __construct(string $importDirectory, EntityManagerInterface $entityManager)
+    public function __construct(string $importDirectory, LoggerInterface $logger, EntityManagerInterface $entityManager)
     {
         $this->importDirectory = $importDirectory;
         $this->entityManager = $entityManager;
+        $this->logger = $logger;
         
         parent::__construct();
     }
@@ -60,6 +68,9 @@ class ImportProductsCommand extends Command
 
         if (!empty($files)) {
             foreach ($files as $file) {
+                if (strstr($file, 'products') === false)
+                    continue;
+                
                 $output->writeln([
                     'Start import '.$file,
                     '============',
@@ -68,21 +79,44 @@ class ImportProductsCommand extends Command
                 if (($handle = fopen($csvDirectory.'/'.$file, "r")) !== false) { 
                     $x = 0;
                     while (($data = fgetcsv($handle)) !== false) {
+                        $productDataFromCsv = explode(';', $data[0]);
+
                         if ($x === 0) {
+                            $nameKey = array_search('nazwa', $productDataFromCsv);
+                            $indexKey = array_search('index', $productDataFromCsv);
+                            $categoryKey = array_search('kategoria', $productDataFromCsv);
                             $x++;
                             continue;
                         }
 
-                        $productDataFromCsv = explode(';', $data[0]);
-                        
                         $product = new products();
-                        $product->setName($productDataFromCsv[0]);
-                        $product->setSku($productDataFromCsv[1]);
+                        if ($nameKey !== false)
+                            $product->setName($productDataFromCsv[$nameKey]);
+                        if ($indexKey !== false)
+                            $product->setIndex($productDataFromCsv[$indexKey]);
+                        if ($categoryKey !== false && !empty($productDataFromCsv[$categoryKey]))
+                            $product->setCategoryId((int) $productDataFromCsv[$categoryKey]);
+
+                        if (!$this->entityManager->isOpen()) {
+                            $this->entityManager = $this->entityManager->create(
+                                $this->entityManager->getConnection(),
+                                $this->entityManager->getConfiguration()
+                            );
+                        }
 
                         $this->entityManager->persist($product);
-                        $this->entityManager->flush();
+                        try {
+                            $this->entityManager->flush();
+                        } catch (UniqueConstraintViolationException $e) {
+                            $this->logger->info('Product with name: '.
+                                ($nameKey !== false?$productDataFromCsv[$nameKey]:'').
+                                ', index: '.($indexKey !== false?$productDataFromCsv[$indexKey]:'').
+                                ', category: '.($categoryKey !== false?$productDataFromCsv[$categoryKey]:'').
+                                ' is duplicated'); 
+                        }
                     }
                     fclose($handle);
+                    unlink($csvDirectory.'/'.$file);
                 }
                 $output->writeln([
                     'End import '.$file,
@@ -97,16 +131,6 @@ class ImportProductsCommand extends Command
             return Command::FAILURE;
         }
 
-        // return this if there was no problem running the command
-        // (it's equivalent to returning int(0))
         return Command::SUCCESS;
-
-        // or return this if some error happened during the execution
-        // (it's equivalent to returning int(1))
-        // return Command::FAILURE;
-
-        // or return this to indicate incorrect command usage; e.g. invalid options
-        // or missing arguments (it's equivalent to returning int(2))
-        // return Command::INVALID
     }
 }

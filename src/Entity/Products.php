@@ -4,9 +4,11 @@ namespace App\Entity;
 
 use App\Repository\ProductsRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass=ProductsRepository::class)
+ * @UniqueEntity("index")
  */
 class Products
 {
@@ -23,14 +25,16 @@ class Products
     private $name;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, unique=true)
      */
-    private $sku;
+    private $index;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
+     * @ORM\ManyToOne(targetEntity="Categories")
+     * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
      */
-    private $category;
+    private $category_id;
 
     public function getId(): ?int
     {
@@ -49,26 +53,26 @@ class Products
         return $this;
     }
 
-    public function getSku(): ?string
+    public function getIndex(): ?string
     {
-        return $this->sku;
+        return $this->index;
     }
 
-    public function setSku(string $sku): self
+    public function setIndex(string $index): self
     {
-        $this->sku = $sku;
+        $this->index = $index;
 
         return $this;
     }
 
-    public function getCategory(): ?int
+    public function getCategoryId(): ?int
     {
-        return $this->category;
+        return $this->category_id;
     }
 
-    public function setCategory(?int $category): self
+    public function setCategoryId(?int $category_id): self
     {
-        $this->category = $category;
+        $this->category_id = $category_id;
 
         return $this;
     }
