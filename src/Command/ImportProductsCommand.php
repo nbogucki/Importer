@@ -93,7 +93,7 @@ class ImportProductsCommand extends Command
                         if ($nameKey !== false)
                             $product->setName($productDataFromCsv[$nameKey]);
                         if ($indexKey !== false)
-                            $product->setIndex($productDataFromCsv[$indexKey]);
+                            $product->setSku($productDataFromCsv[$indexKey]);
                         if ($categoryKey !== false && !empty($productDataFromCsv[$categoryKey]))
                             $product->setCategoryId((int) $productDataFromCsv[$categoryKey]);
 

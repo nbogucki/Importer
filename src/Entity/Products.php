@@ -8,7 +8,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass=ProductsRepository::class)
- * @UniqueEntity("index")
+ * @UniqueEntity("sku")
  */
 class Products
 {
@@ -27,7 +27,7 @@ class Products
     /**
      * @ORM\Column(type="string", length=255, unique=true)
      */
-    private $index;
+    private $sku;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
@@ -53,14 +53,14 @@ class Products
         return $this;
     }
 
-    public function getIndex(): ?string
+    public function getSku(): ?string
     {
-        return $this->index;
+        return $this->sku;
     }
 
-    public function setIndex(string $index): self
+    public function setSku(string $sku): self
     {
-        $this->index = $index;
+        $this->sku = $sku;
 
         return $this;
     }
