@@ -14,7 +14,7 @@ use App\Service\FileUploader;
 class ImporterController extends AbstractController
 {
      /**
-     * @Route("/importer", name="importer")
+     * @Route("/", name="importer")
      */
     public function index(Request $request, FileUploader $fileUploader)
     {

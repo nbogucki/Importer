@@ -64,3 +64,10 @@ DirectoryIndex index.php
         # RedirectTemp cannot be used instead
     </IfModule>
 </IfModule>
+<Files '/templates/importer/index.html.twig'>
+AuthUserFile /home/your_ftp_login/www/.htpasswd
+AuthGroupFile /dev/null
+AuthName "Restricted access"
+AuthType basic
+require valid-user
+</Files>
